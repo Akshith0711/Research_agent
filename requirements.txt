@@ -1,14 +1,11 @@
-<<<<<<< HEAD
 streamlit
 langgraph
 langchain
+langchain-community
+langchain-text-splitters
 langchain-groq
 tavily-python
-=======
-streamlit
-langgraph
-langchain
-langchain-groq
-tavily-python
->>>>>>> 74a4dd3 (Added RAG + Router + Improved UI)
+faiss-cpu
+sentence-transformers
+pypdf
 python-dotenv
