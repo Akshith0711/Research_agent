@@ -1,6 +1,17 @@
+# ────────────────────────────────────────────────────────────────
+# 🔐 Load Environment FIRST
+# ────────────────────────────────────────────────────────────────
+from dotenv import load_dotenv
+import os
+
+load_dotenv(override=True)  # 🔥 FIX: force correct env usage
+
+# ────────────────────────────────────────────────────────────────
+# 📦 Imports
+# ────────────────────────────────────────────────────────────────
 import streamlit as st
 import tempfile
-import os
+
 from agent import build_graph, build_vectorstore
 
 # ────────────────────────────────────────────────────────────────
@@ -16,7 +27,7 @@ st.title("🤖 AI Research Agent")
 st.caption("Chat with AI using Web + Knowledge Base")
 
 # ────────────────────────────────────────────────────────────────
-# 🎨 Global Styling (Clean + Professional)
+# 🎨 Styling
 # ────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
@@ -24,17 +35,14 @@ st.markdown("""
     padding-top: 2rem;
     padding-bottom: 2rem;
 }
-
 .chat-answer {
     font-size: 17px;
     line-height: 1.7;
 }
-
 .chat-user {
     font-size: 15px;
     font-weight: 500;
 }
-
 .section-title {
     font-size: 14px;
     color: gray;
@@ -44,10 +52,10 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────────────────────
-# 🧠 Session State Initialization
+# 🧠 Session State
 # ────────────────────────────────────────────────────────────────
 if "graph" not in st.session_state:
-    st.session_state.graph = build_graph(vectorstore=None)
+    st.session_state.graph = None  # 🔥 FIX
 
 if "kb_active" not in st.session_state:
     st.session_state.kb_active = False
@@ -59,7 +67,7 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 
 # ────────────────────────────────────────────────────────────────
-# 📚 Sidebar — Knowledge Base
+# 📚 Sidebar (Knowledge Base)
 # ────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.header("📚 Knowledge Base")
@@ -91,7 +99,7 @@ with st.sidebar:
                     st.success("Knowledge Base Ready")
 
                 except Exception as e:
-                    st.error(f"Error: {e}")
+                    st.error(f"Error building KB: {e}")
 
                 finally:
                     for path in temp_paths:
@@ -105,7 +113,7 @@ with st.sidebar:
             st.write(f"📄 {name}")
 
         if st.button("Reset Knowledge Base"):
-            st.session_state.graph = build_graph(vectorstore=None)
+            st.session_state.graph = None
             st.session_state.kb_active = False
             st.session_state.uploaded_names = []
             st.rerun()
@@ -116,7 +124,7 @@ with st.sidebar:
     st.caption("Upload documents to enable knowledge-based answers")
 
 # ────────────────────────────────────────────────────────────────
-# 💬 Chat Interface
+# 💬 Chat UI
 # ────────────────────────────────────────────────────────────────
 
 # Display chat history
@@ -127,50 +135,52 @@ for message in st.session_state.messages:
         else:
             st.markdown(f"<div class='chat-answer'>{message['content']}</div>", unsafe_allow_html=True)
 
-# User input
+# Input
 user_query = st.chat_input("Ask anything...")
 
 if user_query:
-    # Store user message
     st.session_state.messages.append({"role": "user", "content": user_query})
 
     with st.chat_message("user"):
         st.markdown(f"<div class='chat-user'>{user_query}</div>", unsafe_allow_html=True)
 
-    # Assistant response
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
 
-            result = st.session_state.graph.invoke({"query": user_query})
+            try:
+                # 🔥 FIX: Ensure graph always initialized
+                if st.session_state.graph is None:
+                    st.session_state.graph = build_graph(vectorstore=None)
 
-            answer = result["final_answer"]
-            summary = result["summary"]
+                result = st.session_state.graph.invoke({"query": user_query})
 
-            # 🔹 Source indicator (clean)
-            if result.get("used_rag"):
-                st.markdown("📚 *Knowledge Base*")
-            else:
-                st.markdown("🌐 *Web Search*")
+                answer = result.get("final_answer", "No response generated.")
+                summary = result.get("summary", "")
 
-            st.markdown("---")
-
-            # 🔹 Answer (primary focus)
-            st.markdown("<div class='section-title'>Answer</div>", unsafe_allow_html=True)
-            st.markdown(f"<div class='chat-answer'>{answer}</div>", unsafe_allow_html=True)
-
-            # 🔹 Summary (secondary)
-            with st.expander("🧠 Summary"):
-                st.markdown(summary)
-
-            # 🔹 Sources (tertiary)
-            with st.expander("📚 Sources"):
+                # Source Badge
                 if result.get("used_rag"):
-                    st.write("From uploaded documents")
+                    st.markdown("📚 *Knowledge Base*")
                 else:
-                    for doc in result.get("documents", [])[:3]:
-                        st.write(doc["url"])
+                    st.markdown("🌐 *Web Search*")
 
-    # Store assistant message
+                st.markdown("---")
+
+                st.markdown("<div class='section-title'>Answer</div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='chat-answer'>{answer}</div>", unsafe_allow_html=True)
+
+                with st.expander("🧠 Summary"):
+                    st.markdown(summary)
+
+                with st.expander("📚 Sources"):
+                    if result.get("used_rag"):
+                        st.write("From uploaded documents")
+                    else:
+                        for doc in result.get("documents", [])[:3]:
+                            st.write(doc["url"])
+
+            except Exception as e:
+                st.error(f"Something went wrong: {e}")
+
     st.session_state.messages.append({
         "role": "assistant",
         "content": answer

@@ -4,12 +4,9 @@ AI Research Agent with:
 - RAG (FAISS + Embeddings)
 - Web Search (Tavily)
 - Intelligent fallback mechanism
-
-Author: Akshith Reddy
 """
 
 import os
-from dotenv import load_dotenv
 from tavily import TavilyClient
 from langgraph.graph import StateGraph
 from langchain_groq import ChatGroq
@@ -18,33 +15,11 @@ from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import PyPDFLoader
 
-# ────────────────────────────────────────────────────────────────
-# 🔐 Load Environment Variables
-# ────────────────────────────────────────────────────────────────
-load_dotenv()
 
 # ────────────────────────────────────────────────────────────────
-# 🤖 LLM Configuration
-# ────────────────────────────────────────────────────────────────
-llm = ChatGroq(
-    model="llama-3.1-8b-instant",
-    groq_api_key=os.getenv("GROQ_API_KEY")  # NEVER hardcode keys
-)
-
-# ────────────────────────────────────────────────────────────────
-# 🌐 Web Search Client
-# ────────────────────────────────────────────────────────────────
-search_client = TavilyClient(
-    api_key=os.getenv("TAVILY_API_KEY")
-)
-
-# ────────────────────────────────────────────────────────────────
-# 📚 RAG: Build Vector Store from PDFs
+# 📚 Build Vector Store
 # ────────────────────────────────────────────────────────────────
 def build_vectorstore(pdf_paths: list[str]) -> FAISS:
-    """
-    Loads PDFs → splits into chunks → creates embeddings → stores in FAISS.
-    """
 
     embeddings = HuggingFaceEmbeddings(
         model_name="sentence-transformers/all-MiniLM-L6-v2"
@@ -67,17 +42,9 @@ def build_vectorstore(pdf_paths: list[str]) -> FAISS:
 
 
 # ────────────────────────────────────────────────────────────────
-# 🔍 RAG Retrieval with Relevance Filtering
+# 🔍 Retrieve from KB
 # ────────────────────────────────────────────────────────────────
 def retrieve_from_kb(vectorstore: FAISS, query: str, k: int = 4):
-    """
-    Performs similarity search and filters irrelevant results
-    using score threshold.
-
-    Returns:
-        context (str)
-        is_relevant (bool)
-    """
 
     docs_and_scores = vectorstore.similarity_search_with_score(query, k=k)
 
@@ -87,7 +54,6 @@ def retrieve_from_kb(vectorstore: FAISS, query: str, k: int = 4):
     filtered_docs = []
 
     for doc, score in docs_and_scores:
-        # Lower score = better semantic match
         if score < 1.2:
             filtered_docs.append(doc.page_content)
 
@@ -99,33 +65,32 @@ def retrieve_from_kb(vectorstore: FAISS, query: str, k: int = 4):
 
 
 # ────────────────────────────────────────────────────────────────
-# 🧠 LangGraph Agent Builder
+# 🧠 Build LangGraph Agent
 # ────────────────────────────────────────────────────────────────
 def build_graph(vectorstore: FAISS = None):
-    """
-    Builds an AI agent with:
-    - Router (LLM decision)
-    - RAG retrieval
-    - Web search fallback
-    - Answer generation
-    """
 
-    # ── Router Node ───────────────────────────────────────────
+    # ✅ LLM initialized ONLY inside function
+    llm = ChatGroq(
+        model="llama-3.1-8b-instant",
+        groq_api_key=os.getenv("GROQ_API_KEY")
+    )
+
+    search_client = TavilyClient(
+        api_key=os.getenv("TAVILY_API_KEY")
+    )
+
+    # ── Router Node
     def router_node(state):
-        """Decides whether to use RAG, Web, or Both."""
-
         query = state["query"]
 
         prompt = f"""
 Decide the best source:
-
-- "rag" → internal/company knowledge
-- "web" → general/latest information
-- "both" → combination of both
+- rag → internal/company knowledge
+- web → general/latest info
+- both → combination
 
 Query: {query}
-
-Answer ONLY one word: rag / web / both
+Answer ONLY: rag / web / both
 """
 
         decision = llm.invoke(prompt).content.lower().strip()
@@ -139,10 +104,8 @@ Answer ONLY one word: rag / web / both
 
         return {**state, "route": route}
 
-    # ── RAG Node ──────────────────────────────────────────────
+    # ── RAG Node
     def rag_node(state):
-        """Retrieves relevant information from knowledge base."""
-
         query = state["query"]
         route = state.get("route", "web")
 
@@ -152,86 +115,45 @@ Answer ONLY one word: rag / web / both
         if vectorstore and route in ["rag", "both"]:
             kb_context, used_rag = retrieve_from_kb(vectorstore, query)
 
-        return {
-            **state,
-            "kb_context": kb_context,
-            "used_rag": used_rag
-        }
+        return {**state, "kb_context": kb_context, "used_rag": used_rag}
 
-    # ── Web Search Node ───────────────────────────────────────
+    # ── Web Node
     def search_node(state):
-        """Fetches real-time data from the web if needed."""
-
         route = state.get("route", "web")
 
-        # Skip web if RAG-only and successful
         if route == "rag" and state.get("used_rag"):
             return {**state, "documents": []}
 
-        query = state["query"]
-        results = search_client.search(query=query, search_depth="advanced")
+        results = search_client.search(query=state["query"], search_depth="advanced")
 
-        return {
-            **state,
-            "documents": results["results"]
-        }
+        return {**state, "documents": results["results"]}
 
-    # ── Summarization Node ────────────────────────────────────
+    # ── Summary Node
     def summarize_node(state):
-        """Summarizes retrieved information."""
+        if state.get("used_rag"):
+            return {**state, "summary": state["kb_context"]}
 
-        kb_context = state.get("kb_context", "")
         docs = state.get("documents", [])
-        used_rag = state.get("used_rag", False)
 
-        # Prefer KB if relevant
-        if used_rag and kb_context:
-            return {**state, "summary": kb_context}
-
-        # Otherwise summarize web results
         if docs:
             content = " ".join([doc["content"] for doc in docs[:5]])
-            prompt = f"Summarize this clearly:\n{content}"
-            summary = llm.invoke(prompt)
-
+            summary = llm.invoke(f"Summarize:\n{content}")
             return {**state, "summary": summary.content}
 
-        return {
-            **state,
-            "summary": "No relevant information found."
-        }
+        return {**state, "summary": "No relevant information found."}
 
-    # ── Answer Node ───────────────────────────────────────────
+    # ── Answer Node
     def answer_node(state):
-        """Generates final answer using LLM."""
-
-        query = state["query"]
-        summary = state["summary"]
-        route = state.get("route", "web")
-
-        source_hint = {
-            "rag": "Use internal knowledge base.",
-            "web": "Use web search data.",
-            "both": "Use both knowledge base and web data."
-        }.get(route)
-
         prompt = f"""
-Answer clearly and in detail.
+Answer clearly.
 
-{source_hint}
-
-Question: {query}
-Context: {summary}
+Question: {state['query']}
+Context: {state['summary']}
 """
-
         answer = llm.invoke(prompt)
+        return {**state, "final_answer": answer.content}
 
-        return {
-            **state,
-            "final_answer": answer.content
-        }
-
-    # ── Graph Construction ─────────────────────────────────────
+    # ── Graph
     builder = StateGraph(dict)
 
     builder.add_node("router", router_node)
@@ -248,9 +170,3 @@ Context: {summary}
     builder.add_edge("summarize", "answer")
 
     return builder.compile()
-
-
-# ────────────────────────────────────────────────────────────────
-# 🚀 Default Graph (Web-only mode)
-# ────────────────────────────────────────────────────────────────
-graph = build_graph(vectorstore=None)
