@@ -1,96 +1,254 @@
-# 🔍 AI Research Agent
+# 🤖 AI Research Agent
 
-A simple AI-powered research assistant that can search the web, summarize information, and generate answers using a structured agent workflow.
+An AI-powered Research Assistant that combines **Retrieval-Augmented Generation (RAG)**, **Real-Time Web Search**, and **LLM-based Routing** to deliver accurate, context-aware responses.
+
+The system intelligently determines whether a query should be answered using an uploaded knowledge base, live web search results, or a combination of both.
 
 ---
 
-## 🚀 Features
+## 🚀 Live Demo
 
-- 🔍 Web search using Tavily API  
-- 🧠 Summarization using LLM  
-- ✍️ Answer generation based on retrieved data  
-- 💬 Chat-style interface using Streamlit  
+**Live Application:** [Add Your Render URL]
+
+**GitHub Repository:** [Add Your Repository URL]
+
+---
+
+## 📖 Overview
+
+AI Research Agent is an end-to-end Generative AI application designed to provide reliable answers by combining:
+
+* 📚 Knowledge Base Retrieval (RAG)
+* 🌐 Real-Time Web Search
+* 🧠 Intelligent Query Routing
+* ⚡ Fast LLM Inference
+
+Unlike traditional chatbots, the system dynamically selects the most relevant information source before generating a response.
+
+---
+
+## ✨ Features
+
+### 📚 Knowledge Base Search
+
+* Upload one or multiple PDF documents
+* Automatic document chunking and indexing
+* Semantic retrieval using FAISS Vector Database
+* Context-aware question answering
+
+### 🌐 Real-Time Web Search
+
+* Live web search powered by Tavily API
+* Access to current and up-to-date information
+* Automatic web content summarization
+
+### 🧠 Intelligent Routing Agent
+
+The system automatically decides whether to:
+
+* Use Knowledge Base Retrieval (RAG)
+* Use Web Search
+* Use Both Sources
+
+### 💬 Interactive Chat Interface
+
+* Streamlit-based conversational UI
+* Chat history support
+* Source-aware responses
+* PDF upload and management
+
+### ⚡ Fast AI Responses
+
+* Powered by Groq's Llama 3.1 model
+* Low-latency answer generation
+
+---
+
+## 🏗️ System Architecture
+
+```text
+User Query
+     │
+     ▼
+LLM Router
+     │
+ ┌───┴─────────────┐
+ │                 │
+ ▼                 ▼
+RAG          Web Search
+(FAISS)       (Tavily)
+ │                 │
+ └── Context Fusion ──┘
+           │
+           ▼
+       Groq LLM
+           │
+           ▼
+     Final Answer
+```
 
 ---
 
 ## 🛠️ Tech Stack
 
-- Python  
-- LangGraph  
-- Groq LLM  
-- Tavily API  
-- Streamlit  
+### AI & LLM
+
+* Groq (Llama 3.1 8B Instant)
+* Google Gemini Embeddings
+
+### Frameworks
+
+* LangGraph
+* LangChain
+
+### Retrieval
+
+* FAISS Vector Database
+
+### Search
+
+* Tavily Search API
+
+### Frontend
+
+* Streamlit
+
+### Backend
+
+* Python
+
+### Utilities
+
+* PyPDF
+* Python Dotenv
 
 ---
 
-## ⚙️ How It Works
+## ⚙️ Workflow
 
-The system follows a step-by-step pipeline:
+1. User submits a query.
+2. Router Agent analyzes query intent.
+3. System determines the best information source:
 
-1. User enters a query  
-2. Agent searches the web using Tavily  
-3. Retrieved content is summarized  
-4. Final answer is generated using LLM  
+   * Knowledge Base
+   * Web Search
+   * Hybrid Retrieval
+4. Relevant context is retrieved.
+5. Information is summarized.
+6. Groq LLM generates the final response.
+7. Answer is displayed through the Streamlit interface.
 
 ---
 
 ## 📂 Project Structure
-.
-├── app.py # Streamlit UI
-├── agent.py # LangGraph agent logic
+
+```text
+Research_Agent/
+│
+├── app.py                 # Streamlit UI
+├── agent.py               # LangGraph Workflow
 ├── requirements.txt
-└── README.md
----
-
-## ▶️ Installation & Setup
-
-1. Clone the repository:
-
-   git clone https://github.com/your-username/Research_agent.git
-   cd Research_agent
-
-2. Create a virtual environment:
-    python -m venv venv
-    venv\Scripts\activate # Windows
-
-3. Install dependencies:
-
-    pip install -r requirements.txt
-
-4. Add your API keys in `.env` file:
-
-   GROQ_API_KEY=your_key
-   TAVILY_API_KEY=your_key
----
-
-## ▶️ Run the App
-   streamlit run app.py
+├── README.md
+├── .env
+└── .gitignore
+```
 
 ---
 
-## 💡 Key Learnings
+## 🚀 Installation
 
-- Built a multi-step AI agent using LangGraph  
-- Integrated external APIs for real-time data  
-- Handled state management across agent nodes  
-- Designed a simple UI using Streamlit  
+### Clone Repository
+
+```bash
+git clone <repository-url>
+cd Research_Agent
+```
+
+### Create Virtual Environment
+
+```bash
+python -m venv venv
+```
+
+### Activate Environment
+
+```bash
+venv\Scripts\activate
+```
+
+### Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### Configure Environment Variables
+
+Create a `.env` file:
+
+```env
+GROQ_API_KEY=your_groq_api_key
+TAVILY_API_KEY=your_tavily_api_key
+GOOGLE_API_KEY=your_google_api_key
+```
+
+### Run Application
+
+```bash
+streamlit run app.py
+```
 
 ---
 
-## 🚀 Future Improvements
+## 🎯 Use Cases
 
-- Add RAG (Retrieval-Augmented Generation)  
-- Add memory for follow-up questions  
-- Improve UI and user experience  
-
----
-
-## 📌 Note
-
-This is a learning project to understand how agent-based AI systems work.
+* Research Assistance
+* Enterprise Knowledge Retrieval
+* Document Question Answering
+* AI-Powered Search Systems
+* Internal Knowledge Base Assistants
+* Educational Learning Platforms
 
 ---
 
-## 📬 Feedback
+## 📸 Screenshots
 
-Feel free to suggest improvements or connect with me!
+Add screenshots of:
+
+* Home Page
+* PDF Upload Interface
+* Knowledge Base Response
+* Web Search Response
+* Hybrid Search Response
+
+---
+
+## 🚀 Future Enhancements
+
+* Conversational Memory
+* Multi-Agent Architecture
+* Source Citations
+* Docker Deployment
+* Cloud Vector Databases
+* User Authentication
+* Multi-Document Knowledge Bases
+
+---
+
+## 👨‍💻 Author
+
+**Akshith Reddy**
+
+Aspiring AI Engineer focused on:
+
+* Generative AI
+* Agentic AI Systems
+* Retrieval-Augmented Generation (RAG)
+* Large Language Models
+* Applied Machine Learning
+
+---
+
+## ⭐ Support
+
+If you found this project useful, consider giving it a star on GitHub.
