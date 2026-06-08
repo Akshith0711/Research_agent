@@ -22,7 +22,7 @@ from langchain_community.document_loaders import PyPDFLoader
 def build_vectorstore(pdf_paths: list[str]) -> FAISS:
 
     embeddings = GoogleGenerativeAIEmbeddings(
-        model="models/embedding-001",
+        model="gemini-embedding-2-preview",
         google_api_key=os.getenv("GOOGLE_API_KEY")
     )
 
