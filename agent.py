@@ -1,7 +1,7 @@
 """
 AI Research Agent with:
 - LLM-based Router
-- RAG (FAISS + Embeddings)
+- RAG (FAISS + Gemini Embeddings)
 - Web Search (Tavily)
 - Intelligent fallback mechanism
 """
@@ -11,7 +11,7 @@ from tavily import TavilyClient
 from langgraph.graph import StateGraph
 from langchain_groq import ChatGroq
 from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import PyPDFLoader
 
@@ -21,8 +21,9 @@ from langchain_community.document_loaders import PyPDFLoader
 # ────────────────────────────────────────────────────────────────
 def build_vectorstore(pdf_paths: list[str]) -> FAISS:
 
-    embeddings = HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
+    embeddings = GoogleGenerativeAIEmbeddings(
+        model="models/embedding-001",
+        google_api_key=os.getenv("GOOGLE_API_KEY")
     )
 
     splitter = RecursiveCharacterTextSplitter(
@@ -54,7 +55,9 @@ def retrieve_from_kb(vectorstore: FAISS, query: str, k: int = 4):
     filtered_docs = []
 
     for doc, score in docs_and_scores:
-        if score < 1.2:
+        # Gemini embeddings may have different score scales
+        # Keeping a relaxed threshold initially
+        if score < 2.0:
             filtered_docs.append(doc.page_content)
 
     if not filtered_docs:
@@ -69,7 +72,6 @@ def retrieve_from_kb(vectorstore: FAISS, query: str, k: int = 4):
 # ────────────────────────────────────────────────────────────────
 def build_graph(vectorstore: FAISS = None):
 
-    # ✅ LLM initialized ONLY inside function
     llm = ChatGroq(
         model="llama-3.1-8b-instant",
         groq_api_key=os.getenv("GROQ_API_KEY")
@@ -113,47 +115,86 @@ Answer ONLY: rag / web / both
         used_rag = False
 
         if vectorstore and route in ["rag", "both"]:
-            kb_context, used_rag = retrieve_from_kb(vectorstore, query)
+            kb_context, used_rag = retrieve_from_kb(
+                vectorstore,
+                query
+            )
 
-        return {**state, "kb_context": kb_context, "used_rag": used_rag}
+        return {
+            **state,
+            "kb_context": kb_context,
+            "used_rag": used_rag
+        }
 
-    # ── Web Node
+    # ── Web Search Node
     def search_node(state):
+
         route = state.get("route", "web")
 
         if route == "rag" and state.get("used_rag"):
-            return {**state, "documents": []}
+            return {
+                **state,
+                "documents": []
+            }
 
-        results = search_client.search(query=state["query"], search_depth="advanced")
+        results = search_client.search(
+            query=state["query"],
+            search_depth="advanced"
+        )
 
-        return {**state, "documents": results["results"]}
+        return {
+            **state,
+            "documents": results["results"]
+        }
 
-    # ── Summary Node
+    # ── Summarization Node
     def summarize_node(state):
+
         if state.get("used_rag"):
-            return {**state, "summary": state["kb_context"]}
+            return {
+                **state,
+                "summary": state["kb_context"]
+            }
 
         docs = state.get("documents", [])
 
         if docs:
-            content = " ".join([doc["content"] for doc in docs[:5]])
-            summary = llm.invoke(f"Summarize:\n{content}")
-            return {**state, "summary": summary.content}
+            content = " ".join(
+                [doc["content"] for doc in docs[:5]]
+            )
 
-        return {**state, "summary": "No relevant information found."}
+            summary = llm.invoke(
+                f"Summarize:\n{content}"
+            )
 
-    # ── Answer Node
+            return {
+                **state,
+                "summary": summary.content
+            }
+
+        return {
+            **state,
+            "summary": "No relevant information found."
+        }
+
+    # ── Final Answer Node
     def answer_node(state):
+
         prompt = f"""
 Answer clearly.
 
 Question: {state['query']}
 Context: {state['summary']}
 """
-        answer = llm.invoke(prompt)
-        return {**state, "final_answer": answer.content}
 
-    # ── Graph
+        answer = llm.invoke(prompt)
+
+        return {
+            **state,
+            "final_answer": answer.content
+        }
+
+    # ── Build Graph
     builder = StateGraph(dict)
 
     builder.add_node("router", router_node)
