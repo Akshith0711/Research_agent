@@ -8,59 +8,54 @@ The system intelligently determines whether a query should be answered using an 
 
 ## 🚀 Live Demo
 
-**Live Application:** [Add Your Render URL]
-
-**GitHub Repository:** [Add Your Repository URL]
+| Resource | Link |
+|---|---|
+| 🌐 Live Application | [https://research-agent-egbt.onrender.com] |
+| 📁 GitHub Repository | [https://github.com/Akshith0711/Research_agent] |
 
 ---
 
 ## 📖 Overview
 
-AI Research Agent is an end-to-end Generative AI application designed to provide reliable answers by combining:
+AI Research Agent is an end-to-end Generative AI application designed to provide reliable answers by dynamically combining:
 
-* 📚 Knowledge Base Retrieval (RAG)
-* 🌐 Real-Time Web Search
-* 🧠 Intelligent Query Routing
-* ⚡ Fast LLM Inference
+- 📚 **Knowledge Base Retrieval** via RAG
+- 🌐 **Real-Time Web Search**
+- 🧠 **Intelligent Query Routing**
+- ⚡ **Fast LLM Inference**
 
-Unlike traditional chatbots, the system dynamically selects the most relevant information source before generating a response.
+Unlike traditional chatbots, the system selects the most relevant information source *before* generating a response — ensuring accuracy, freshness, and context-awareness in every answer.
 
 ---
 
 ## ✨ Features
 
 ### 📚 Knowledge Base Search
-
-* Upload one or multiple PDF documents
-* Automatic document chunking and indexing
-* Semantic retrieval using FAISS Vector Database
-* Context-aware question answering
+- Upload one or multiple PDF documents
+- Automatic document chunking and indexing
+- Semantic retrieval using FAISS Vector Database
+- Context-aware question answering
 
 ### 🌐 Real-Time Web Search
-
-* Live web search powered by Tavily API
-* Access to current and up-to-date information
-* Automatic web content summarization
+- Live web search powered by Tavily API
+- Access to current, up-to-date information
+- Automatic web content summarization
 
 ### 🧠 Intelligent Routing Agent
-
-The system automatically decides whether to:
-
-* Use Knowledge Base Retrieval (RAG)
-* Use Web Search
-* Use Both Sources
+The system automatically decides the best retrieval strategy:
+- ✅ Knowledge Base (RAG)
+- ✅ Web Search
+- ✅ Hybrid (Both Sources)
 
 ### 💬 Interactive Chat Interface
-
-* Streamlit-based conversational UI
-* Chat history support
-* Source-aware responses
-* PDF upload and management
+- Streamlit-based conversational UI
+- Persistent chat history
+- Source-aware responses
+- PDF upload and management
 
 ### ⚡ Fast AI Responses
-
-* Powered by Groq's Llama 3.1 model
-* Low-latency answer generation
+- Powered by Groq's Llama 3.1 model
+- Low-latency answer generation
 
 ---
 
@@ -91,52 +86,60 @@ RAG          Web Search
 
 ## 🛠️ Tech Stack
 
-### AI & LLM
-
-* Groq (Llama 3.1 8B Instant)
-* Google Gemini Embeddings
-
-### Frameworks
-
-* LangGraph
-* LangChain
-
-### Retrieval
-
-* FAISS Vector Database
-
-### Search
-
-* Tavily Search API
-
-### Frontend
-
-* Streamlit
-
-### Backend
-
-* Python
-
-### Utilities
-
-* PyPDF
-* Python Dotenv
+| Category | Technology |
+|---|---|
+| LLM Inference | Groq (Llama 3.1 8B Instant) |
+| Embeddings | Google Gemini Embeddings |
+| Orchestration | LangGraph, LangChain |
+| Vector Store | FAISS |
+| Web Search | Tavily Search API |
+| Frontend | Streamlit |
+| Backend | Python |
+| PDF Parsing | PyPDF |
+| Config | Python Dotenv |
 
 ---
 
 ## ⚙️ Workflow
 
-1. User submits a query.
-2. Router Agent analyzes query intent.
-3. System determines the best information source:
+1. User submits a query
+2. **Router Agent** analyzes the query intent
+3. System selects the optimal information source:
+   - Knowledge Base, Web Search, or Hybrid
+4. Relevant context is retrieved
+5. Information is summarized and fused
+6. **Groq LLM** generates the final response
+7. Answer is displayed in the Streamlit interface
 
-   * Knowledge Base
-   * Web Search
-   * Hybrid Retrieval
-4. Relevant context is retrieved.
-5. Information is summarized.
-6. Groq LLM generates the final response.
-7. Answer is displayed through the Streamlit interface.
+---
+
+## 📸 Screenshots
+
+### 🏠 Home Page
+> The main interface where users interact with the assistant.
+
+![Home Page](screenshots/homepage.png)
+
+---
+
+### 📄 PDF Upload Interface
+> Upload one or more PDF documents to build a custom knowledge base.
+
+![PDF Upload](screenshots/pdf_upload.png)
+
+---
+
+### 📚 Knowledge Base Response (RAG)
+> The agent retrieves context from uploaded documents and generates an answer.
+
+![Knowledge Base Response](screenshots/rag_response.png)
+
+---
+
+### 🌐 Web Search Response
+> The agent fetches live results from the web when the query requires current information.
+
+![Web Search Response](screenshots/web_search.png)
 
 ---
 
@@ -147,44 +150,53 @@ Research_Agent/
 │
 ├── app.py                 # Streamlit UI
 ├── agent.py               # LangGraph Workflow
-├── requirements.txt
+├── requirements.txt       # Python dependencies
 ├── README.md
-├── .env
-└── .gitignore
+├── .env                   # API keys (not committed)
+├── .gitignore
+└── screenshots/           # App screenshots for documentation
+    ├── homepage.png
+    ├── pdf_upload.png
+    ├── rag_response.png
+    └── web_search.png
 ```
 
 ---
 
 ## 🚀 Installation
 
-### Clone Repository
+### 1. Clone the Repository
 
 ```bash
 git clone <repository-url>
 cd Research_Agent
 ```
 
-### Create Virtual Environment
+### 2. Create a Virtual Environment
 
 ```bash
 python -m venv venv
 ```
 
-### Activate Environment
+### 3. Activate the Environment
 
 ```bash
+# Windows
 venv\Scripts\activate
+
+# macOS / Linux
+source venv/bin/activate
 ```
 
-### Install Dependencies
+### 4. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### Configure Environment Variables
+### 5. Configure Environment Variables
 
-Create a `.env` file:
+Create a `.env` file in the project root:
 
 ```env
 GROQ_API_KEY=your_groq_api_key
@@ -192,7 +204,7 @@ TAVILY_API_KEY=your_tavily_api_key
 GOOGLE_API_KEY=your_google_api_key
 ```
 
-### Run Application
+### 6. Run the Application
 
 ```bash
 streamlit run app.py
@@ -202,36 +214,24 @@ streamlit run app.py
 
 ## 🎯 Use Cases
 
-* Research Assistance
-* Enterprise Knowledge Retrieval
-* Document Question Answering
-* AI-Powered Search Systems
-* Internal Knowledge Base Assistants
-* Educational Learning Platforms
+- 🔬 Research Assistance
+- 🏢 Enterprise Knowledge Retrieval
+- 📄 Document Question Answering
+- 🔍 AI-Powered Search Systems
+- 🧠 Internal Knowledge Base Assistants
+- 🎓 Educational Learning Platforms
 
 ---
 
-## 📸 Screenshots
+## 🚀 Roadmap
 
-Add screenshots of:
-
-* Home Page
-* PDF Upload Interface
-* Knowledge Base Response
-* Web Search Response
-* Hybrid Search Response
-
----
-
-## 🚀 Future Enhancements
-
-* Conversational Memory
-* Multi-Agent Architecture
-* Source Citations
-* Docker Deployment
-* Cloud Vector Databases
-* User Authentication
-* Multi-Document Knowledge Bases
+- [ ] Conversational Memory
+- [ ] Multi-Agent Architecture
+- [ ] Inline Source Citations
+- [ ] Docker Deployment
+- [ ] Cloud Vector Databases (Pinecone / Weaviate)
+- [ ] User Authentication
+- [ ] Multi-Document Knowledge Bases
 
 ---
 
@@ -239,16 +239,14 @@ Add screenshots of:
 
 **Akshith Reddy**
 
-Aspiring AI Engineer focused on:
-
-* Generative AI
-* Agentic AI Systems
-* Retrieval-Augmented Generation (RAG)
-* Large Language Models
-* Applied Machine Learning
+Aspiring AI Engineer with a focus on:
+- Generative AI & Large Language Models
+- Agentic AI Systems
+- Retrieval-Augmented Generation (RAG)
+- Applied Machine Learning
 
 ---
 
 ## ⭐ Support
 
-If you found this project useful, consider giving it a star on GitHub.
+If you found this project useful, consider giving it a **⭐ star** on GitHub — it helps others discover the project and motivates further development!
